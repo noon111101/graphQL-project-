@@ -1,0 +1,136 @@
+.book-detail-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.back-button {
+  margin-bottom: 20px;
+}
+
+.back-button a {
+  color: #3498db;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.back-button a:hover {
+  color: #2980b9;
+}
+
+.book-detail-card {
+  background: white;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.book-detail-card h1 {
+  color: #2c3e50;
+  margin: 0 0 30px 0;
+  font-size: 2rem;
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 15px;
+}
+
+.detail-section {
+  margin-bottom: 25px;
+}
+
+.detail-section label {
+  display: block;
+  font-weight: bold;
+  color: #34495e;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.detail-section p {
+  color: #555;
+  line-height: 1.6;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.author-info .author-box {
+  background: #ecf0f1;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.author-info .author-box h3 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+}
+
+.author-info .author-box .bio {
+  color: #555;
+  margin: 10px 0;
+  font-style: italic;
+}
+
+.btn-view-author {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-view-author:hover {
+  background-color: #2980b9;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.btn-edit, .btn-delete {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-edit {
+  background-color: #f39c12;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #e67e22;
+}
+
+.btn-delete {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #c0392b;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #e74c3c;
+}
+
