@@ -1,0 +1,57 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "github" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Lấy code về
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Đăng nhập vào Registry riêng của bạn
+      - name: Login to Private Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASS }}
+
+      # 3. Build ảnh và Push lên Registry
+      # (Sử dụng Dockerfile multi-stage có sẵn trong code)
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          # Đặt tên ảnh kèm theo URL registry
+          tags: ${{ secrets.REGISTRY_URL }}/my-java-app:latest
+
+  deploy-to-vps:
+    needs: build-and-push # Chờ build xong mới chạy deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Deployment Script via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          port: 22
+          # Lệnh chạy trên VPS của bạn
+          script: |
+            echo ">>> Kết nối SSH thành công!"
+            
+            # 1. Đi vào thư mục chứa docker-compose
+            cd /var/www/graphQL-project/
+            
+            # 2. Login vào registry trên VPS (để pull được ảnh về)
+            # Lưu ý: Pass auth registry cần truyền vào đây hoặc đã login sẵn
+            echo ${{ secrets.REGISTRY_PASS }} | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
+            
+            # 3. Chạy script deploy thông minh (Rolling Update)
+            # Nhớ cấp quyền chạy trước đó: chmod +x deploy.sh
+            ./deploy.sh
