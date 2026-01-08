@@ -20,15 +20,32 @@ jobs:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASS }}
 
-      # 3. Build ảnh và Push lên Registry
-      # (Sử dụng Dockerfile multi-stage có sẵn trong code)
-      - name: Build and Push Docker Image
+      # 3. Build và Push Backend GraphQL
+      - name: Build and Push Backend GraphQL
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./backend
+          dockerfile: ./backend/Dockerfile
           push: true
-          # Đặt tên ảnh kèm theo URL registry
-          tags: ${{ secrets.REGISTRY_URL }}/my-java-app:latest
+          tags: ${{ secrets.REGISTRY_URL }}/graphql-backend:latest
+
+      # 4. Build và Push Backend REST API
+      - name: Build and Push Backend REST API
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend-rest-api
+          dockerfile: ./backend-rest-api/Dockerfile
+          push: true
+          tags: ${{ secrets.REGISTRY_URL }}/rest-api-backend:latest
+
+      # 5. Build và Push Frontend
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          dockerfile: ./frontend/Dockerfile
+          push: true
+          tags: ${{ secrets.REGISTRY_URL }}/graphql-frontend:latest
 
   deploy-to-vps:
     needs: build-and-push # Chờ build xong mới chạy deploy
