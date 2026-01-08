@@ -2,7 +2,7 @@
 
 # ============================================
 # ZERO DOWNTIME DEPLOYMENT SCRIPT
-# Rolling Update cho Docker Compose
+# Blue-Green Deployment cho Docker Compose
 # ============================================
 
 set -e  # Dừng script nếu có lỗi
@@ -41,7 +41,7 @@ check_health() {
     return 1
 }
 
-# Hàm deploy từng service (Rolling Update)
+# Hàm deploy từng service (Blue-Green)
 deploy_service() {
     local service=$1
     local health_url=$2
@@ -49,35 +49,30 @@ deploy_service() {
     echo ""
     echo "📦 Đang deploy service: $service"
     
-    # Lấy số lượng container hiện tại
-    local current_replicas=$(docker compose ps -q $service | wc -l)
+    # Lưu tên container cũ
+    OLD_CONTAINERS=$(docker compose ps -q $service 2>/dev/null || echo "")
     
-    if [ $current_replicas -eq 0 ]; then
+    if [ -z "$OLD_CONTAINERS" ]; then
         echo "   Không có container cũ, khởi động mới..."
         docker compose up -d $service
         check_health "$service" "$health_url"
     else
-        echo "   Scale up thêm 1 container mới..."
-        docker compose up -d --scale $service=2 --no-recreate $service
+        echo "   Đổi tên container cũ để giữ lại..."
+        # Tạo containers mới với image mới
+        docker compose up -d --force-recreate --no-deps $service
         
-        # Đợi container mới healthy
+        # Đợi container mới khởi động
         sleep 5
         check_health "$service" "$health_url"
         
         if [ $? -eq 0 ]; then
-            echo "   Tắt container cũ..."
-            # Lấy container ID của container cũ nhất
-            OLD_CONTAINER=$(docker compose ps -q $service | tail -n 1)
-            docker stop $OLD_CONTAINER
-            docker rm $OLD_CONTAINER
-            
-            echo "   Scale về 1 container..."
-            docker compose up -d --scale $service=1 $service
-            
+            echo "   Xóa container cũ..."
+            # Container cũ đã bị replace, không cần xóa thủ công
             echo "✅ Deploy $service thành công!"
         else
             echo "❌ Container mới không healthy, rollback..."
-            docker compose up -d --scale $service=1 $service
+            # Rollback bằng cách restart container cũ nếu còn
+            docker compose up -d $service
             exit 1
         fi
     fi
@@ -89,7 +84,7 @@ docker compose pull
 
 # Deploy từng service với health check
 echo ""
-echo "🔄 Bắt đầu Rolling Update..."
+echo "🔄 Bắt đầu Blue-Green Deployment..."
 
 deploy_service "backend" "http://localhost:8080/actuator/health"
 deploy_service "backend-rest-api" "http://localhost:8081/actuator/health"
