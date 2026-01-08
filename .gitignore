@@ -51,6 +51,8 @@ replay_pid*
 # Dependencies
 frontend/node_modules/
 node_modules/
+package-lock.json
+frontend/package-lock.json
 
 # Production build
 frontend/build/
@@ -105,7 +107,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # vuepress build output
 .vuepress/dist

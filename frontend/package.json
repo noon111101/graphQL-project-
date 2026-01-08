@@ -13,6 +13,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
+    "axios": "^1.6.2",
     "graphql": "^16.8.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

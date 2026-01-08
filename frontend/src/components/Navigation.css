@@ -22,6 +22,32 @@
   padding: 20px 0;
 }
 
+.backend-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 2rem;
+}
+
+.backend-selector button {
+  padding: 0.5rem 1rem;
+  border: 2px solid #3498db;
+  background-color: transparent;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.backend-selector button:hover {
+  background-color: #2980b9;
+}
+
+.backend-selector button.active {
+  background-color: #3498db;
+  font-weight: bold;
+}
+
 .nav-menu {
   display: flex;
   list-style: none;
