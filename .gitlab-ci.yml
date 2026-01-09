@@ -1,0 +1,101 @@
+# GitLab CI/CD Pipeline Configuration
+# Tự động build, push Docker images và deploy lên VPS
+
+stages:
+  - build
+  - deploy
+
+# Global variables
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# Template cho build Docker images
+.build_template: &build_definition
+  stage: build
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    # Login vào Private Registry
+    - echo "$REGISTRY_PASS" | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
+  script:
+    # Build và push image
+    - docker build -t $IMAGE_TAG $CONTEXT_PATH
+    - docker push $IMAGE_TAG
+  only:
+    - gitlab  # Chỉ chạy khi push vào branch 'gitlab'
+  tags:
+    - docker  # Sử dụng GitLab Runner có tag 'docker'
+
+# Job 1: Build Backend GraphQL
+build-backend-graphql:
+  <<: *build_definition
+  variables:
+    CONTEXT_PATH: ./backend
+    IMAGE_TAG: $REGISTRY_URL/graphql-backend:latest
+  script:
+    - cd backend
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+# Job 2: Build Backend REST API
+build-backend-rest-api:
+  <<: *build_definition
+  variables:
+    CONTEXT_PATH: ./backend-rest-api
+    IMAGE_TAG: $REGISTRY_URL/rest-api-backend:latest
+  script:
+    - cd backend-rest-api
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+# Job 3: Build Frontend
+build-frontend:
+  <<: *build_definition
+  variables:
+    CONTEXT_PATH: ./frontend
+    IMAGE_TAG: $REGISTRY_URL/graphql-frontend:latest
+  script:
+    - cd frontend
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+# Job 4: Deploy to VPS
+deploy-to-vps:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    # Cài đặt openssh-client
+    - apk add --no-cache openssh-client
+    # Setup SSH key
+    - mkdir -p ~/.ssh
+    - echo "$VPS_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+        echo ">>> Kết nối SSH thành công!"
+        
+        # 1. Đi vào thư mục chứa docker-compose
+        cd /var/www/graphQL-project/
+        
+        # 2. Login vào registry trên VPS (để pull được image về)
+        echo $REGISTRY_PASS | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
+        
+        # 3. Pull code mới nhất từ GitLab
+        git pull origin gitlab
+        
+        # 4. Chạy script deploy thông minh (Rolling Update)
+        # Nhớ cấp quyền chạy trước đó: chmod +x deploy.sh
+        ./deploy.sh
+      EOF
+  only:
+    - gitlab
+  needs:
+    - build-backend-graphql
+    - build-backend-rest-api
+    - build-frontend
+  tags:
+    - docker
