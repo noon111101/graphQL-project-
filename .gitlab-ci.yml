@@ -84,11 +84,7 @@ deploy-to-vps:
         # 2. Login vào registry trên VPS (để pull được image về)
         echo $REGISTRY_PASS | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
         
-        # 3. Pull code mới nhất từ GitLab
-        git pull origin master
-        
-        # 4. Chạy script deploy thông minh (Rolling Update)
-        # Nhớ cấp quyền chạy trước đó: chmod +x deploy.sh
+        # 3. Chạy script deploy thông minh (Rolling Update)
         ./deploy.sh
       EOF
   only:
