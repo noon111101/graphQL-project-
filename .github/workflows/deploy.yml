@@ -53,7 +53,7 @@ jobs:
     steps:
       - name: Execute Deployment Script via SSH
         uses: appleboy/ssh-action@master
-        with:
+        with: #không nên dùng state open source thông qua thằng khacs
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
