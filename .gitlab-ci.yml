@@ -5,17 +5,11 @@ stages:
   - build
   - deploy
 
-# Global variables
-variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: "/certs"
-
 # Template cho build Docker images
 .build_template: &build_definition
   stage: build
-  image: docker:24-dind
-  services:
-    - docker:24-dind
+  image: docker:24                    # ← Đổi từ docker:24-dind
+  # ❌ XÓA services: - docker:24-dind
   before_script:
     # Login vào Private Registry
     - echo "$REGISTRY_PASS" | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
@@ -24,9 +18,9 @@ variables:
     - docker build -t $IMAGE_TAG $CONTEXT_PATH
     - docker push $IMAGE_TAG
   only:
-    - master  # Chỉ chạy khi push vào branch 'gitlab'
+    - master
   tags:
-    - docker  # Sử dụng GitLab Runner có tag 'docker'
+    - docker
 
 # Job 1: Build Backend GraphQL
 build-backend-graphql:
@@ -75,14 +69,14 @@ deploy-to-vps:
     - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
   script:
     - |
-      ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+      ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST bash -s << EOF
         echo ">>> Kết nối SSH thành công!"
         
         # 1. Đi vào thư mục chứa docker-compose
         cd /var/www/gitlab/graphQL-project/
         
         # 2. Login vào registry trên VPS (để pull được image về)
-        echo $REGISTRY_PASS | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
+        echo "$REGISTRY_PASS" | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
         
         # 3. Chạy script deploy thông minh (Rolling Update)
         ./deploy.sh
@@ -95,3 +89,6 @@ deploy-to-vps:
     - build-frontend
   tags:
     - docker
+  environment:
+    name: production
+    url: https://gitlab.aiunboxed.net
