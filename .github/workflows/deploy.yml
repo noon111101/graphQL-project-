@@ -51,24 +51,32 @@ jobs:
     needs: build-and-push # Chờ build xong mới chạy deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Execute Deployment Script via SSH
-        uses: appleboy/ssh-action@master
-        with: #không nên dùng state open source thông qua thằng khacs
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          port: 22
-          # Lệnh chạy trên VPS của bạn
-          script: |
+      # Setup SSH key an toàn
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+      #không nên dùng state open source thông qua thằng khacs
+
+      # SSH và chạy deploy script
+      - name: Deploy to VPS via SSH
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             echo ">>> Kết nối SSH thành công!"
             
             # 1. Đi vào thư mục chứa docker-compose
             cd /var/www/graphQL-project/
             
             # 2. Login vào registry trên VPS (để pull được ảnh về)
-            # Lưu ý: Pass auth registry cần truyền vào đây hoặc đã login sẵn
-            echo ${{ secrets.REGISTRY_PASS }} | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
+            echo "${{ secrets.REGISTRY_PASS }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
             
-            # 3. Chạy script deploy thông minh (Rolling Update)
-            # Nhớ cấp quyền chạy trước đó: chmod +x deploy.sh
+            # 3. Chạy script deploy thông minh (Blue-Green Deployment)
             ./deploy.sh
+          EOF
+
+      # Dọn dẹp SSH key
+      - name: Cleanup SSH Key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
