@@ -24,7 +24,7 @@ variables:
     - docker build -t $IMAGE_TAG $CONTEXT_PATH
     - docker push $IMAGE_TAG
   only:
-    - gitlab  # Chỉ chạy khi push vào branch 'gitlab'
+    - master  # Chỉ chạy khi push vào branch 'gitlab'
   tags:
     - docker  # Sử dụng GitLab Runner có tag 'docker'
 
@@ -79,20 +79,20 @@ deploy-to-vps:
         echo ">>> Kết nối SSH thành công!"
         
         # 1. Đi vào thư mục chứa docker-compose
-        cd /var/www/graphQL-project/
+        cd /var/www/gitlab/graphQL-project/
         
         # 2. Login vào registry trên VPS (để pull được image về)
         echo $REGISTRY_PASS | docker login $REGISTRY_URL -u $REGISTRY_USER --password-stdin
         
         # 3. Pull code mới nhất từ GitLab
-        git pull origin gitlab
+        git pull origin master
         
         # 4. Chạy script deploy thông minh (Rolling Update)
         # Nhớ cấp quyền chạy trước đó: chmod +x deploy.sh
         ./deploy.sh
       EOF
   only:
-    - gitlab
+    - master
   needs:
     - build-backend-graphql
     - build-backend-rest-api
