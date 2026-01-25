@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "authors")
+@Table(name = "graphql_authors")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,4 +31,3 @@ public class Author {
     @OneToMany(mappedBy = "authorEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Book> books = new ArrayList<>();
 }
-
